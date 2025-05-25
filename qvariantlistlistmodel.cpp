@@ -1,8 +1,8 @@
-﻿#include "QVariantListListModel.h"
+﻿#include "qvariantlistlistmodel.h"
 
 QVariantListListModel::QVariantListListModel(QObject *parent)
     : QAbstractTableModel(parent)
-    ,m_varListList(NULL)
+    ,m_varListList(nullptr)
 {
 }
 
@@ -35,27 +35,28 @@ int QVariantListListModel::columnCount(const QModelIndex &parent) const
 
 QVariant QVariantListListModel::data(const QModelIndex &index, int role) const
 {
-    if (!index.isValid())
+    if (!index.isValid() || m_varListList == nullptr)
         return QVariant();
-    if(NULL == m_varListList)
+        
+    if (role != Qt::DisplayRole && role != Qt::EditRole)
         return QVariant();
-    if(Qt::DisplayRole == role)
-    {
-        const int row = index.row();
-        const int col = index.column();
-        if(row >= m_varListList->size())
-            return QVariant();
-        const int colSize = m_varListList->at(row).size();
-        if(col >= colSize)
-            return QVariant();
-        return m_varListList->at(row).at(col);
-    }
-    return QVariant();
+        
+    const int row = index.row();
+    const int col = index.column();
+    
+    if (row >= m_varListList->size() || row < 0)
+        return QVariant();
+        
+    const auto& rowData = m_varListList->at(row);
+    if (col >= rowData.size() || col < 0)
+        return QVariant();
+        
+    return rowData.at(col);
 }
 
 void QVariantListListModel::setVariantListListPtr(QList<QList<QVariant> > *ptr)
 {
-    if(NULL == ptr)
+    if(ptr == nullptr)
         return;
     m_varListList = ptr;
     updateData();
@@ -64,16 +65,21 @@ void QVariantListListModel::setVariantListListPtr(QList<QList<QVariant> > *ptr)
 void QVariantListListModel::updateData()
 {
     beginResetModel();
-    m_rowCount = m_varListList->size();
-    m_columnCount = 0;
-    int colSize=0;
-    for(int i=0;i<m_rowCount;++i)
-    {
-        colSize = m_varListList->at(i).size();
-        if(colSize > m_columnCount)
-        {
-            m_columnCount = colSize;
+    
+    if (m_varListList == nullptr) {
+        m_rowCount = 0;
+        m_columnCount = 0;
+    } else {
+        m_rowCount = m_varListList->size();
+        m_columnCount = 0;
+        
+        // Find maximum column count more efficiently
+        for(const auto& row : *m_varListList) {
+            if(row.size() > m_columnCount) {
+                m_columnCount = row.size();
+            }
         }
     }
+    
     endResetModel();
 }

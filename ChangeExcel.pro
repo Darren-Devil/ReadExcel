@@ -4,7 +4,8 @@
 #
 #-------------------------------------------------
 
-QT       += core gui axcontainer
+QT       += core gui
+win32: QT += axcontainer
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
