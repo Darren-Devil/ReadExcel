@@ -1,6 +1,8 @@
 ﻿#include "tableview.h"
 #include <QDebug>
+#if defined(Q_OS_WIN)
 #include <QAxObject>
+#endif
 
 TableView::TableView(QWidget *parent):QTableView(parent)
 {

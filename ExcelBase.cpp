@@ -9,7 +9,7 @@
 
 
 
-#define TC_FREE(x)  {delete x; x=NULL;}
+#define TC_FREE(x)  {delete x; x=nullptr;}
 
 class ExcelBasePrivate
 {
@@ -37,11 +37,11 @@ public:
 ExcelBasePrivate::ExcelBasePrivate(ExcelBase *qptr)
     : q_ptr(qptr)
     #if defined(Q_OS_WIN)
-    , excel(NULL)
-    , books(NULL)
-    , book(NULL)
-    , sheets(NULL)
-    , sheet(NULL)
+    , excel(nullptr)
+    , books(nullptr)
+    , book(nullptr)
+    , sheets(nullptr)
+    , sheet(nullptr)
     #endif // Q_OS_WIN
 {
 }
@@ -49,18 +49,7 @@ ExcelBasePrivate::ExcelBasePrivate(ExcelBase *qptr)
 ExcelBasePrivate::~ExcelBasePrivate()
 {
 #if defined(Q_OS_WIN)
-    if(excel)
-    {
-        if (!excel->isNull())
-        {
-            excel->dynamicCall("Quit()");
-        }
-    }
-    TC_FREE(sheet );
-    TC_FREE(sheets);
-    TC_FREE(book  );
-    TC_FREE(books );
-    TC_FREE(excel );
+    destory(); // Use the existing cleanup method
 #endif // Q_OS_WIN
 }
 
@@ -70,7 +59,7 @@ void ExcelBasePrivate::construct()
     destory();
     excel = new QAxObject(q_ptr);
     excel->setControl("Excel.Application");
-    excel->setProperty("Visible",false);
+    excel->setProperty("Visible", false);
     if (excel->isNull())
     {
         excel->setControl("KET.Application");
@@ -85,21 +74,21 @@ void ExcelBasePrivate::construct()
 void ExcelBasePrivate::destory()
 {
 #if defined(Q_OS_WIN)
-    TC_FREE(sheet );
+    TC_FREE(sheet);
     TC_FREE(sheets);
-    if (book != NULL && ! book->isNull())
+    if (book != nullptr && !book->isNull())
     {
         book->dynamicCall("Close(Boolean)", false);
     }
-    TC_FREE(book );
+    TC_FREE(book);
     TC_FREE(books);
-    if (excel != NULL && !excel->isNull())
+    if (excel != nullptr && !excel->isNull())
     {
         excel->dynamicCall("Quit()");
     }
     TC_FREE(excel);
-    filename  = "";
-    sheetName = "";
+    filename.clear();
+    sheetName.clear();
 #endif // Q_OS_WIN
 }
 
@@ -187,8 +176,6 @@ void ExcelBase::save()
     if(d->filename.isEmpty())
         return;
     saveAs(d->filename);
-#else
-    Q_UNUSED(filename)
 #endif // Q_OS_WIN
 }
 
@@ -484,7 +471,7 @@ bool ExcelBase::writeCurrentSheet(const QList<QList<QVariant> > &cells)
     Q_D(ExcelBase);
     if(cells.size() <= 0)
         return false;
-    if(NULL == d->sheet || d->sheet->isNull())
+    if(nullptr == d->sheet || d->sheet->isNull())
         return false;
     int row = cells.size();
     int col = cells.at(0).size();
@@ -494,7 +481,7 @@ bool ExcelBase::writeCurrentSheet(const QList<QList<QVariant> > &cells)
     rangStr = "A1:" + rangStr;
     qDebug()<<rangStr;
     QAxObject *range = d->sheet->querySubObject("Range(const QString&)",rangStr);
-    if(NULL == range || range->isNull())
+    if(nullptr == range || range->isNull())
     {
         return false;
     }
@@ -505,27 +492,24 @@ bool ExcelBase::writeCurrentSheet(const QList<QList<QVariant> > &cells)
     delete range;
     return succ;
 #else
+    Q_UNUSED(cells)
     return true;
 #endif
 }
 ///
 /// \brief 把列数转换为excel的字母列号
 /// \param data 大于0的数
-/// \return 字母列号，如1->A 26->Z 27 AA
+/// \return 字母列号，如1->A 26->Z 27->AA
 ///
 void ExcelBase::convertToColName(int data, QString &res)
 {
-    Q_ASSERT(data>0 && data<65535);
-    int tempData = data / 26;
-    if(tempData > 0)
-    {
-        int mode = data % 26;
-        convertToColName(mode,res);
-        convertToColName(tempData,res);
-    }
-    else
-    {
-        res=(to26AlphabetString(data)+res);
+    Q_ASSERT(data > 0 && data < 65535);
+    res.clear();
+    
+    while (data > 0) {
+        data--; // Convert to 0-based indexing
+        res.prepend(QChar('A' + (data % 26)));
+        data /= 26;
     }
 }
 ///

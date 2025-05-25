@@ -1,10 +1,12 @@
 ﻿#ifndef EXCELREADER_H
 #define EXCELREADER_H
 #include <QObject>
-#include <QAxObject>
 #include <QString>
 #include <QStringList>
 #include <QVariant>
+#if defined(Q_OS_WIN)
+#include <QAxObject>
+#endif
 
 class ExcelBasePrivate;
 class ExcelBase : public QObject
